@@ -87,7 +87,7 @@ This project is deployed using **GitHub Pages**.
 
 ## 👨‍💻 Author
 
-**Manav Arora**
+**Manav Arora Karan Bisht Mibhur Mahajan**
 
 ---
 
