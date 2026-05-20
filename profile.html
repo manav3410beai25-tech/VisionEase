@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile | VisionEase</title>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Plus+Jakarta+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .profile-hero {
+      height: auto;
+      min-height: 100vh;
+      background-color: var(--navy);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 120px 24px 60px;
+      color: var(--white);
+      position: relative;
+      overflow: hidden;
+    }
+    .profile-container {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 1100px;
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 40px;
+      background: rgba(255,255,255,0.06);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 32px 80px rgba(0, 0, 0, 0.4);
+    }
+    .profile-left, .profile-right {
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+    .profile-right {
+      border-left: 1px solid rgba(255,255,255,0.1);
+      padding-left: 40px;
+    }
+    
+    /* Avatar Upload */
+    .avatar-wrapper {
+      position: relative;
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 3px solid var(--sage);
+      margin: 0 auto 10px;
+      cursor: pointer;
+      group: hover;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    .avatar-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s;
+    }
+    .avatar-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(23, 30, 25, 0.7);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      transition: opacity 0.3s;
+      color: var(--white);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      font-weight: 600;
+      text-align: center;
+      padding: 10px;
+    }
+    .avatar-wrapper:hover .avatar-overlay {
+      opacity: 1;
+    }
+    .avatar-wrapper:hover .avatar-img {
+      transform: scale(1.05);
+    }
+
+    /* Forms */
+    .profile-form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .profile-label {
+      color: var(--sage);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 600;
+    }
+    .profile-input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.05);
+      color: var(--white);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.3s, background 0.3s;
+    }
+    .profile-input:focus {
+      border-color: var(--sage);
+      background: rgba(255,255,255,0.08);
+    }
+    .profile-input:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Grid for prescription */
+    .prescription-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    /* Face Scanner Frame */
+    .scanner-box {
+      position: relative;
+      width: 100%;
+      height: 250px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: 1px dashed rgba(255,255,255,0.2);
+    }
+    .scanner-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.6;
+    }
+    .scanner-line {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, #b7c6c2, #bbe2f5, #b7c6c2, transparent);
+      box-shadow: 0 0 12px #bbe2f5, 0 0 20px #b7c6c2;
+      animation: scan-anim 3s ease-in-out infinite;
+      display: none;
+      z-index: 5;
+    }
+    @keyframes scan-anim {
+      0% { top: 0%; }
+      50% { top: 98%; }
+      100% { top: 0%; }
+    }
+    .scanner-glow {
+      position: absolute;
+      inset: 0;
+      box-shadow: inset 0 0 30px rgba(187, 226, 245, 0);
+      transition: box-shadow 0.5s;
+      pointer-events: none;
+    }
+    .scanning .scanner-glow {
+      box-shadow: inset 0 0 30px rgba(187, 226, 245, 0.4);
+      animation: pulse-glow 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.9; }
+    }
+
+    /* Analysis Dashboard */
+    .analysis-results {
+      display: none;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 15px;
+    }
+    .analysis-title {
+      font-family: var(--font-anton);
+      font-size: 1.3rem;
+      letter-spacing: 0.05em;
+      margin-bottom: 15px;
+      color: var(--white);
+      text-transform: uppercase;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding-bottom: 8px;
+    }
+    .analysis-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+    .analysis-label {
+      color: var(--taupe);
+    }
+    .analysis-value {
+      font-weight: 600;
+      color: var(--white);
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .profile-container {
+        grid-template-columns: 1fr;
+        padding: 24px;
+      }
+      .profile-right {
+        border-left: none;
+        border-top: 1px solid rgba(255,255,255,0.1);
+        padding-left: 0;
+        padding-top: 40px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation bar -->
+  <nav class="nav">
+    <div class="nav-logo"><a href="index.html">VISIONEASE</a></div>
+    <div class="nav-links">
+      <a href="index.html">Works</a>
+      <a href="spectacles.html">Spectacles</a>
+      <a href="lenses.html">Lenses</a>
+      <a href="faq.html">FAQ</a>
+      <a href="contact.html">Contact Us</a>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <a href="cart.html" class="nav-btn" style="border:none;">CART (0)</a>
+      <a href="login.html" class="nav-btn">LOGIN</a>
+      <a href="signup.html" class="nav-btn" style="background:var(--white); color:var(--navy);">SIGNUP</a>
+    </div>
+  </nav>
+
+  <!-- Profile Section -->
+  <section class="profile-hero">
+    
+    <div class="orb orb-sage"></div>
+    <div class="orb orb-softblue"></div>
+
+    <div class="profile-container reveal">
+      
+      <!-- Profile Left Pane: Info, Prescription -->
+      <div class="profile-left">
+        <div>
+          <!-- Profile Pic Box -->
+          <div class="avatar-wrapper" id="avatarWrapper">
+            <img src="logo.jpg" alt="Profile Picture" class="avatar-img" id="avatarImage">
+            <div class="avatar-overlay">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom: 5px;">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+              Change photo
+            </div>
+          </div>
+          <input type="file" id="profilePicInput" accept="image/*" style="display: none;">
+          <h2 id="profileDisplayName" style="font-family: var(--font-anton); font-size: 2.2rem; text-align: center; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 10px;">Valued Customer</h2>
+          <p id="profileDisplayEmail" style="color: var(--sage); font-size: 12px; text-align: center; letter-spacing: 0.05em;"></p>
+        </div>
+
+        <form id="profileDetailsForm" style="display: flex; flex-direction: column; gap: 20px;">
+          <div class="profile-form-group">
+            <label class="profile-label" for="profileName">Full Name</label>
+            <input type="text" id="profileName" class="profile-input" required placeholder="Your full name">
+          </div>
+          <div class="profile-form-group">
+            <label class="profile-label" for="profileEmail">Email Address</label>
+            <input type="email" id="profileEmail" class="profile-input" disabled>
+          </div>
+          <div class="profile-form-group">
+            <label class="profile-label" for="profilePhone">Phone Number</label>
+            <input type="tel" id="profilePhone" class="profile-input" placeholder="Enter contact number">
+          </div>
+
+          <!-- Eyewear Prescription Details (Add by yourself/futuristic detail) -->
+          <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+            <h3 style="font-family: var(--font-anton); font-size: 1.2rem; letter-spacing: 0.05em; margin-bottom: 15px; text-transform: uppercase; color: var(--white);">Optic Prescription</h3>
+            
+            <div class="prescription-grid">
+              <div class="profile-form-group">
+                <label class="profile-label" for="presLeftOS">Left Eye Power (OS)</label>
+                <input type="text" id="presLeftOS" class="profile-input" placeholder="-1.50 DS">
+              </div>
+              <div class="profile-form-group">
+                <label class="profile-label" for="presRightOD">Right Eye Power (OD)</label>
+                <input type="text" id="presRightOD" class="profile-input" placeholder="-1.25 DS">
+              </div>
+            </div>
+            <div class="prescription-grid" style="margin-top: 12px;">
+              <div class="profile-form-group">
+                <label class="profile-label" for="presPD">Pupil Distance (PD)</label>
+                <input type="text" id="presPD" class="profile-input" placeholder="63 mm">
+              </div>
+              <div class="profile-form-group">
+                <label class="profile-label" for="presLensType">Lens Material</label>
+                <select id="presLensType" class="profile-input" style="background: rgba(23,30,25,0.9); color: #fff;">
+                  <option value="Standard Optical">Standard Optical</option>
+                  <option value="Polycarbonate Blue-Cut">Polycarbonate Blue-Cut</option>
+                  <option value="High-Index Thin">High-Index Thin</option>
+                  <option value="Smart Retina HUD">Smart Retina HUD</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="nav-btn" style="background: var(--white); color: var(--navy); border: none; font-weight: 600; width: 100%; padding: 14px;">SAVE SETTINGS</button>
+        </form>
+      </div>
+
+      <!-- Profile Right Pane: AI Face Feature Scan & Analytics -->
+      <div class="profile-right">
+        <div>
+          <h2 style="font-family: var(--font-anton); font-size: 2.2rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--white);">AI Face Analysis</h2>
+          <p style="color: var(--taupe); font-size: 13px; margin-top: 5px;">Scan your facial characteristics to generate matching smart-lens and spectacle recommendations.</p>
+        </div>
+
+        <div class="scanner-box" id="scannerBox">
+          <img src="logo.jpg" alt="Scanning Target" class="scanner-img" id="scannerImage">
+          <div class="scanner-line" id="scannerLine"></div>
+          <div class="scanner-glow"></div>
+          <div id="scannerPlaceholderText" style="position: absolute; text-align: center; z-index: 10; padding: 20px;">
+            <div style="font-size: 24px; margin-bottom: 8px;">📷</div>
+            <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sage); font-weight: 600;">Upload photo to enable scanner</div>
+          </div>
+        </div>
+
+        <button type="button" class="nav-btn" id="startScanBtn" style="border: 1px solid var(--sage); color: var(--white); background: transparent; font-weight: 600; width: 100%; padding: 14px; opacity: 0.5; cursor: not-allowed;" disabled>
+          ANALYSE FACE FEATURES
+        </button>
+
+        <!-- Face Shape Analysis Results Dashboard -->
+        <div class="analysis-results" id="analysisResults">
+          <div class="analysis-title">Biometric Report</div>
+          
+          <div class="analysis-row">
+            <span class="analysis-label">Face Structure shape:</span>
+            <span class="analysis-value" id="resFaceShape">-</span>
+          </div>
+          <div class="analysis-row">
+            <span class="analysis-label">Symmetry Index:</span>
+            <span class="analysis-value" id="resSymmetry">98.4%</span>
+          </div>
+          <div class="analysis-row">
+            <span class="analysis-label">Pupillary Distance (Est.):</span>
+            <span class="analysis-value" id="resPDValue">64 mm</span>
+          </div>
+          <div class="analysis-row">
+            <span class="analysis-label">Cheekbone Highlight:</span>
+            <span class="analysis-value" id="resCheekbone">High Angle</span>
+          </div>
+          <div class="analysis-row">
+            <span class="analysis-label">Optic Tone Recommendation:</span>
+            <span class="analysis-value" id="resTone">Warm Contrast</span>
+          </div>
+          
+          <div style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 15px;">
+            <label class="profile-label" style="display: block; margin-bottom: 5px;">Matching Eyewear Selection</label>
+            <p id="resRecommendationText" style="font-size: 12px; line-height: 1.5; color: var(--sage); margin-bottom: 15px;"></p>
+            <button id="addRecommendedBtn" class="nav-btn" style="width: 100%; border: 1px solid var(--white); background: transparent; color: var(--white); padding: 10px; font-size: 11px; font-weight: 600;">ADD RECOMMENDED FRAME TO CART</button>
+          </div>
+        </div>
+
+        <!-- Simulation of Order History / Prescription Trackers -->
+        <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; display: flex; flex-direction: column; gap: 15px;">
+          <h3 style="font-family: var(--font-anton); font-size: 1.2rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--white);">Orders Tracker</h3>
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 15px; display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
+            <div>
+              <div style="font-weight: 600; color: var(--white);">Order #VE-2026-9812</div>
+              <div style="color: var(--taupe); margin-top: 3px;">AURA FRAMES (1x) · Processing</div>
+            </div>
+            <span style="color: var(--sage); text-transform: uppercase; font-weight: 600; font-size: 10px; letter-spacing: 0.1em;">In Transit</span>
+          </div>
+        </div>
+
+        <button type="button" class="nav-btn" id="logoutBtn" style="border: 1px solid #ff6b6b; color: #ff6b6b; background: transparent; font-weight: 600; width: 100%; padding: 14px; margin-top: 20px;">
+          LOG OUT OF ACCOUNT
+        </button>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- VisionEase AI Chatbot UI (for completeness/consistency) -->
+  <div class="chat-overlay" id="chatOverlay" role="dialog" aria-label="VisionEase AI Assistant">
+    <div class="chat-panel" id="chatPanel">
+      <div class="chat-header">
+        <div class="chat-header-info">
+          <div class="chat-avatar">👁</div>
+          <div>
+            <div class="chat-title">VisionEase AI</div>
+            <div class="chat-status"><span class="status-dot"></span> Online</div>
+          </div>
+        </div>
+        <div class="chat-header-actions">
+          <button class="chat-clear-btn" id="chatClearBtn" title="Clear chat">🗑</button>
+          <button class="chat-close-btn" id="chatCloseBtn" aria-label="Close chat">✕</button>
+        </div>
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-welcome">
+          <div class="chat-welcome-icon">✨</div>
+          <p>Hi! I'm your VisionEase AI assistant.<br>Ask me anything about our spectacles, lenses, or eyewear.</p>
+        </div>
+      </div>
+      <div class="chat-typing" id="chatTyping" style="display:none;">
+        <span></span><span></span><span></span>
+      </div>
+      <form class="chat-input-form" id="chatForm">
+        <input type="text" id="chatInput" class="chat-input" placeholder="Ask about our products…" autocomplete="off" maxlength="500">
+        <button type="submit" class="chat-send-btn" id="chatSendBtn" aria-label="Send message">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M22 2L11 13M22 2L15 22 11 13 2 9l20-7z"/>
+          </svg>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    // In-page dynamic script specifically for the Profile dashboard functionalities
+    document.addEventListener('DOMContentLoaded', () => {
+      const user = JSON.parse(localStorage.getItem('visionease_user'));
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      // Load Profile Picture from localstorage if available
+      const savedPic = localStorage.getItem('visionease_profile_pic');
+      const avatarImg = document.getElementById('avatarImage');
+      const scannerImg = document.getElementById('scannerImage');
+      const scannerPlaceholderText = document.getElementById('scannerPlaceholderText');
+      const startScanBtn = document.getElementById('startScanBtn');
+
+      if (savedPic) {
+        avatarImg.src = savedPic;
+        scannerImg.src = savedPic;
+        scannerPlaceholderText.style.display = 'none';
+        startScanBtn.disabled = false;
+        startScanBtn.style.opacity = '1';
+        startScanBtn.style.cursor = 'pointer';
+      }
+
+      // Populate basic info
+      const profileName = document.getElementById('profileName');
+      const profileEmail = document.getElementById('profileEmail');
+      const profileDisplayName = document.getElementById('profileDisplayName');
+      const profileDisplayEmail = document.getElementById('profileDisplayEmail');
+
+      profileEmail.value = user.email || '';
+      profileDisplayEmail.textContent = user.email || '';
+      
+      const displayName = user.name || (user.email ? user.email.split('@')[0] : 'Valued Customer');
+      profileName.value = displayName;
+      profileDisplayName.textContent = displayName;
+
+      // Load phone, prescription if saved
+      const savedPhone = localStorage.getItem('visionease_phone');
+      if (savedPhone) document.getElementById('profilePhone').value = savedPhone;
+
+      const savedPrescription = JSON.parse(localStorage.getItem('visionease_prescription'));
+      if (savedPrescription) {
+        document.getElementById('presLeftOS').value = savedPrescription.left || '';
+        document.getElementById('presRightOD').value = savedPrescription.right || '';
+        document.getElementById('presPD').value = savedPrescription.pd || '';
+        document.getElementById('presLensType').value = savedPrescription.lensType || 'Standard Optical';
+      }
+
+      // Profile details save handler
+      document.getElementById('profileDetailsForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const updatedName = profileName.value.trim();
+        const updatedPhone = document.getElementById('profilePhone').value.trim();
+        
+        // Update user name in localStorage
+        const currentUser = JSON.parse(localStorage.getItem('visionease_user')) || {};
+        currentUser.name = updatedName;
+        localStorage.setItem('visionease_user', JSON.stringify(currentUser));
+        
+        // Save phone and prescription
+        localStorage.setItem('visionease_phone', updatedPhone);
+        
+        const prescription = {
+          left: document.getElementById('presLeftOS').value.trim(),
+          right: document.getElementById('presRightOD').value.trim(),
+          pd: document.getElementById('presPD').value.trim(),
+          lensType: document.getElementById('presLensType').value
+        };
+        localStorage.setItem('visionease_prescription', JSON.stringify(prescription));
+
+        profileDisplayName.textContent = updatedName;
+        alert('Settings saved successfully!');
+      });
+
+      // Handle picture upload
+      const profilePicInput = document.getElementById('profilePicInput');
+      const avatarWrapper = document.getElementById('avatarWrapper');
+
+      avatarWrapper.addEventListener('click', () => {
+        profilePicInput.click();
+      });
+
+      profilePicInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(event) {
+            const dataUrl = event.target.result;
+            localStorage.setItem('visionease_profile_pic', dataUrl);
+            avatarImg.src = dataUrl;
+            scannerImg.src = dataUrl;
+            scannerPlaceholderText.style.display = 'none';
+            
+            // Enable Scan button
+            startScanBtn.disabled = false;
+            startScanBtn.style.opacity = '1';
+            startScanBtn.style.cursor = 'pointer';
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      // Face scanning simulation
+      const scannerBox = document.getElementById('scannerBox');
+      const scannerLine = document.getElementById('scannerLine');
+      const analysisResults = document.getElementById('analysisResults');
+      
+      const resFaceShape = document.getElementById('resFaceShape');
+      const resSymmetry = document.getElementById('resSymmetry');
+      const resRecommendationText = document.getElementById('resRecommendationText');
+      const addRecommendedBtn = document.getElementById('addRecommendedBtn');
+
+      // Recommendations list
+      const shapes = ['Oval', 'Round', 'Square', 'Heart'];
+      const recs = {
+        'Oval': {
+          title: 'Aura Frames',
+          price: 499.00,
+          desc: 'Your oval structure is versatile. Rectangular and aviator structures like Aura Frames fit best, offering sharp structural contrast to your curves.',
+          img: 'images copy/specs1.jpg'
+        },
+        'Round': {
+          title: 'Titanium Edge',
+          price: 899.00,
+          desc: 'For round structures, angular frames like Titanium Edge add definition, highlighting cheekbones and drawing attention upward.',
+          img: 'images copy/specs6.jpg'
+        },
+        'Square': {
+          title: 'Classic Aviator',
+          price: 350.00,
+          desc: 'Square faces benefit from round or curved frames. Classic Aviators soften strong jawlines and balance facial features beautifully.',
+          img: 'images copy/specs3.jpg'
+        },
+        'Heart': {
+          title: 'Retro Round',
+          price: 320.00,
+          desc: 'Heart faces are wider at the forehead and narrow at the chin. Light, rounded frames like Retro Round complement your proportions.',
+          img: 'images copy/specs4.jpg'
+        }
+      };
+
+      // Determine shape consistently based on email address
+      let hash = 0;
+      const email = user.email || 'customer';
+      for (let i = 0; i < email.length; i++) {
+        hash = email.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      const selectedShape = shapes[Math.abs(hash) % shapes.length];
+      const recommendedItem = recs[selectedShape];
+
+      // Scan process click
+      startScanBtn.addEventListener('click', () => {
+        startScanBtn.disabled = true;
+        startScanBtn.textContent = 'SCANNING IN PROGRESS...';
+        scannerBox.classList.add('scanning');
+        scannerLine.style.display = 'block';
+        analysisResults.style.display = 'none';
+
+        setTimeout(() => {
+          // Finished scan
+          startScanBtn.disabled = false;
+          startScanBtn.textContent = 'ANALYSE FACE FEATURES';
+          scannerBox.classList.remove('scanning');
+          scannerLine.style.display = 'none';
+          
+          // Display details
+          resFaceShape.textContent = selectedShape;
+          resSymmetry.textContent = (94.0 + (Math.abs(hash) % 50) / 10).toFixed(1) + '%';
+          document.getElementById('resPDValue').textContent = (61 + (Math.abs(hash) % 6)) + ' mm';
+          resRecommendationText.textContent = recommendedItem.desc;
+          
+          analysisResults.style.display = 'block';
+          analysisResults.scrollIntoView({ behavior: 'smooth' });
+        }, 3000);
+      });
+
+      // Add Recommended to Cart
+      addRecommendedBtn.addEventListener('click', () => {
+        let cart = JSON.parse(localStorage.getItem('visionease_cart')) || [];
+        const name = recommendedItem.title;
+        const price = recommendedItem.price;
+        const image = recommendedItem.img;
+        
+        const existingItem = cart.find(item => item.name === name);
+        if (existingItem) {
+          existingItem.quantity += 1;
+        } else {
+          cart.push({ name, price, image, quantity: 1 });
+        }
+        localStorage.setItem('visionease_cart', JSON.stringify(cart));
+        
+        // Dispatch custom event to trigger nav update in script.js
+        const totalQty = cart.reduce((sum, item) => sum + item.quantity, 0);
+        const cartBtns = document.querySelectorAll('.nav-btn');
+        cartBtns.forEach(btn => {
+          if (btn.textContent.includes('CART')) {
+            btn.textContent = `CART (${totalQty})`;
+          }
+        });
+        
+        addRecommendedBtn.textContent = 'ADDED!';
+        addRecommendedBtn.style.background = 'var(--sage)';
+        addRecommendedBtn.style.color = '#fff';
+        setTimeout(() => {
+          addRecommendedBtn.textContent = 'ADD RECOMMENDED FRAME TO CART';
+          addRecommendedBtn.style.background = '';
+          addRecommendedBtn.style.color = '';
+        }, 2000);
+      });
+
+      // Logout handler
+      document.getElementById('logoutBtn').addEventListener('click', () => {
+        localStorage.removeItem('visionease_user');
+        window.location.href = 'index.html';
+      });
+
+    });
+  </script>
+</body>
+</html>
