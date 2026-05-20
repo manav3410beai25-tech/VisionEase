@@ -25,16 +25,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     
+    // Access control for profile.html
+    if (window.location.pathname.includes('profile.html')) {
+        const user = localStorage.getItem('visionease_user');
+        if (!user) {
+            alert('Please login to access your profile.');
+            window.location.href = 'login.html';
+            return;
+        }
+    }
+
     let cart = JSON.parse(localStorage.getItem('visionease_cart')) || [];
 
     function updateCartCount() {
-        const cartBtns = document.querySelectorAll('.nav-btn');
-        cartBtns.forEach(btn => {
-            if (btn.textContent.includes('CART')) {
-                const totalQty = cart.reduce((sum, item) => sum + item.quantity, 0);
-                btn.textContent = `CART (${totalQty})`;
+        const user = JSON.parse(localStorage.getItem('visionease_user'));
+        const navRight = document.querySelector('.nav > div:last-child');
+        const totalQty = cart.reduce((sum, item) => sum + item.quantity, 0);
+        if (navRight) {
+            if (user) {
+                // User is logged in: show Cart and Profile
+                navRight.innerHTML = `
+                    <a href="cart.html" class="nav-btn" style="border:none;">CART (${totalQty})</a>
+                    <a href="profile.html" class="nav-btn" style="background:var(--white); color:var(--navy);">PROFILE</a>
+                `;
+            } else {
+                // User is not logged in: show Cart, Login, Signup
+                navRight.innerHTML = `
+                    <a href="cart.html" class="nav-btn" style="border:none;">CART (${totalQty})</a>
+                    <a href="login.html" class="nav-btn">LOGIN</a>
+                    <a href="signup.html" class="nav-btn" style="background:var(--white); color:var(--navy);">SIGNUP</a>
+                `;
             }
-        });
+        }
     }
 
     function addToCart(name, price, image) {
@@ -259,6 +281,216 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('visionease_cart', JSON.stringify(cart));
                 updateCartCount();
                 renderCart();
+            }
+        });
+    }
+
+    // ─── CHECKOUT MODAL AND FORM HANDLING ───────────────────────────
+    const checkoutBtn = document.getElementById('checkoutBtn');
+    const checkoutModal = document.getElementById('checkoutModal');
+    const closeCheckoutBtn = document.getElementById('closeCheckoutBtn');
+    
+    let couponPercent = 0;
+    let appliedCouponCode = '';
+
+    function updateCheckoutTotals() {
+        const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const checkoutSubtotal = document.getElementById('checkoutSubtotal');
+        if (checkoutSubtotal) checkoutSubtotal.textContent = `₹${subtotal.toFixed(2)}`;
+        
+        // Auto 10% discount for orders > 2000
+        let autoDiscount = 0;
+        const autoDiscountRow = document.getElementById('autoDiscountRow');
+        if (subtotal > 2000) {
+            autoDiscount = subtotal * 0.10;
+            if (autoDiscountRow) autoDiscountRow.style.display = 'flex';
+            const checkoutAutoDiscount = document.getElementById('checkoutAutoDiscount');
+            if (checkoutAutoDiscount) checkoutAutoDiscount.textContent = `-₹${autoDiscount.toFixed(2)}`;
+        } else {
+            if (autoDiscountRow) autoDiscountRow.style.display = 'none';
+        }
+        
+        // Coupon discount
+        const couponDiscountRow = document.getElementById('checkoutDiscountRow');
+        let couponDiscount = 0;
+        if (couponPercent > 0) {
+            couponDiscount = (subtotal - autoDiscount) * (couponPercent / 100);
+            if (couponDiscountRow) {
+                couponDiscountRow.style.display = 'flex';
+                const cpEl = document.getElementById('couponPercent');
+                if (cpEl) cpEl.textContent = couponPercent;
+                const cdEl = document.getElementById('checkoutDiscount');
+                if (cdEl) cdEl.textContent = `-₹${couponDiscount.toFixed(2)}`;
+            }
+        } else {
+            if (couponDiscountRow) couponDiscountRow.style.display = 'none';
+        }
+        
+        const finalTotal = subtotal - autoDiscount - couponDiscount;
+        const checkoutFinalTotal = document.getElementById('checkoutFinalTotal');
+        if (checkoutFinalTotal) checkoutFinalTotal.textContent = `₹${finalTotal.toFixed(2)}`;
+    }
+
+    if (checkoutBtn && checkoutModal) {
+        checkoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            // Check if user is logged in
+            const user = localStorage.getItem('visionease_user');
+            if (!user) {
+                alert('Please log in to proceed to checkout.');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            if (cart.length === 0) {
+                alert('Your cart is empty!');
+                return;
+            }
+            
+            // Show modal
+            checkoutModal.style.display = 'flex';
+            
+            // Reset fields
+            couponPercent = 0;
+            appliedCouponCode = '';
+            const couponCodeInput = document.getElementById('couponCode');
+            if (couponCodeInput) couponCodeInput.value = '';
+            const couponMessage = document.getElementById('couponMessage');
+            if (couponMessage) couponMessage.textContent = '';
+            const addressInput = document.getElementById('checkoutAddress');
+            if (addressInput) {
+                addressInput.value = '';
+                addressInput.style.borderColor = 'rgba(255,255,255,0.2)';
+            }
+            const addressError = document.getElementById('addressError');
+            if (addressError) addressError.style.display = 'none';
+            const upiInput = document.getElementById('upiId');
+            if (upiInput) {
+                upiInput.value = '';
+                upiInput.style.borderColor = 'rgba(255,255,255,0.2)';
+            }
+            const upiError = document.getElementById('upiError');
+            if (upiError) upiError.style.display = 'none';
+            
+            // Pre-calculate details
+            updateCheckoutTotals();
+        });
+    }
+    
+    if (closeCheckoutBtn && checkoutModal) {
+        closeCheckoutBtn.addEventListener('click', () => {
+            checkoutModal.style.display = 'none';
+        });
+        
+        checkoutModal.addEventListener('click', (e) => {
+            if (e.target === checkoutModal) {
+                checkoutModal.style.display = 'none';
+            }
+        });
+    }
+
+    const applyCouponBtn = document.getElementById('applyCouponBtn');
+    const couponCodeInput = document.getElementById('couponCode');
+    const couponMessage = document.getElementById('couponMessage');
+    
+    if (applyCouponBtn && couponCodeInput && couponMessage) {
+        applyCouponBtn.addEventListener('click', () => {
+            const code = couponCodeInput.value.trim().toUpperCase();
+            if (!code) {
+                couponMessage.textContent = 'Please enter a coupon code.';
+                couponMessage.style.color = '#ff6b6b';
+                return;
+            }
+            
+            // Valid coupon codes
+            const validCoupons = {
+                'VISION10': 10,
+                'EASE20': 20,
+                'WELCOME50': 50
+            };
+            
+            if (validCoupons.hasOwnProperty(code)) {
+                couponPercent = validCoupons[code];
+                appliedCouponCode = code;
+                couponMessage.textContent = `Coupon "${code}" applied successfully!`;
+                couponMessage.style.color = '#4ade80';
+                updateCheckoutTotals();
+            } else {
+                couponPercent = 0;
+                appliedCouponCode = '';
+                couponMessage.textContent = 'Invalid coupon code. Try VISION10, EASE20, or WELCOME50.';
+                couponMessage.style.color = '#ff6b6b';
+                updateCheckoutTotals();
+            }
+        });
+    }
+
+    const paymentRadios = document.getElementsByName('paymentMethod');
+    const upiSection = document.getElementById('upiSection');
+    
+    if (paymentRadios && upiSection) {
+        paymentRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                if (e.target.value === 'upi') {
+                    upiSection.style.display = 'block';
+                } else {
+                    upiSection.style.display = 'none';
+                    const upiError = document.getElementById('upiError');
+                    if (upiError) upiError.style.display = 'none';
+                }
+            });
+        });
+    }
+
+    const checkoutForm = document.getElementById('checkoutForm');
+    if (checkoutForm) {
+        checkoutForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const addressInput = document.getElementById('checkoutAddress');
+            const addressError = document.getElementById('addressError');
+            const selectedPaymentRadio = document.querySelector('input[name="paymentMethod"]:checked');
+            const paymentMethod = selectedPaymentRadio ? selectedPaymentRadio.value : 'cod';
+            
+            let isValid = true;
+            
+            // Address validation
+            if (!addressInput.value.trim() || addressInput.value.trim().length < 10) {
+                if (addressError) addressError.style.display = 'block';
+                addressInput.style.borderColor = '#ff6b6b';
+                isValid = false;
+            } else {
+                if (addressError) addressError.style.display = 'none';
+                addressInput.style.borderColor = 'rgba(255,255,255,0.2)';
+            }
+            
+            // UPI validation (conditional)
+            if (paymentMethod === 'upi') {
+                const upiInput = document.getElementById('upiId');
+                const upiError = document.getElementById('upiError');
+                const upiPattern = /^[\w.-]+@[\w.-]+$/;
+                
+                if (!upiInput.value.trim() || !upiPattern.test(upiInput.value.trim())) {
+                    if (upiError) upiError.style.display = 'block';
+                    upiInput.style.borderColor = '#ff6b6b';
+                    isValid = false;
+                } else {
+                    if (upiError) upiError.style.display = 'none';
+                    upiInput.style.borderColor = 'rgba(255,255,255,0.2)';
+                }
+            }
+            
+            if (isValid) {
+                // Success: Order Placed!
+                alert('Order placed successfully! Thank you for choosing VisionEase.');
+                
+                // Clear cart
+                cart = [];
+                localStorage.removeItem('visionease_cart');
+                
+                // Hide modal and reload/redirect
+                checkoutModal.style.display = 'none';
+                window.location.href = 'index.html';
             }
         });
     }
