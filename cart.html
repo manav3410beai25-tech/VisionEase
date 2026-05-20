@@ -51,8 +51,78 @@
             </div>
             
             <div style="margin-top: 40px; text-align: right;">
-              <a href="#" class="nav-btn" style="background:var(--white); color:var(--navy); padding: 16px 32px; font-weight:600; font-size: 1rem; border: none; cursor: pointer; display: inline-block;">CHECKOUT</a>
+              <button id="checkoutBtn" class="nav-btn" style="background:var(--white); color:var(--navy); padding: 16px 32px; font-weight:600; font-size: 1rem; border: none; cursor: pointer; display: inline-block;">CHECKOUT</button>
             </div>
+        </div>
+      </div>
+
+      <!-- Checkout Modal -->
+      <div id="checkoutModal" class="chat-overlay" style="display: none; justify-content: center; align-items: center; pointer-events: auto;">
+        <div class="chat-panel" style="width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; padding: 30px; position: relative;">
+          <button id="closeCheckoutBtn" style="position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: rgba(255,255,255,0.7); font-size: 20px; cursor: pointer;">✕</button>
+          
+          <h2 style="font-family: var(--font-anton); font-size: 2.2rem; letter-spacing: 0.05em; color: var(--white); margin-bottom: 20px; text-transform: uppercase;">Checkout Details</h2>
+          
+          <form id="checkoutForm" novalidate style="text-align: left;">
+            <!-- Address Section -->
+            <div style="margin-bottom: 20px;">
+              <label style="display: block; color: var(--sage); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">Delivery Address</label>
+              <textarea id="checkoutAddress" required placeholder="Enter your full street address, city, and pincode..." style="width:100%; height: 80px; padding:12px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: #fff; border-radius: 8px; font-family: inherit; font-size: 14px; outline: none; resize: none; transition: border-color 0.3s;"></textarea>
+              <div id="addressError" style="color: #ff6b6b; font-size: 12px; margin-top: 5px; display: none;">Please enter a valid address (at least 10 characters).</div>
+            </div>
+            
+            <!-- Payment Section -->
+            <div style="margin-bottom: 20px;">
+              <label style="display: block; color: var(--sage); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">Payment Method</label>
+              <div style="display: flex; gap: 20px; margin-top: 5px;">
+                <label style="display: flex; align-items: center; gap: 8px; color: var(--white); font-size: 14px; cursor: pointer;">
+                  <input type="radio" name="paymentMethod" value="cod" checked style="accent-color: var(--sage);"> Cash on Delivery (COD)
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; color: var(--white); font-size: 14px; cursor: pointer;">
+                  <input type="radio" name="paymentMethod" value="upi" style="accent-color: var(--sage);"> UPI Payment
+                </label>
+              </div>
+            </div>
+            
+            <!-- UPI ID Input (Conditional) -->
+            <div id="upiSection" style="margin-bottom: 20px; display: none;">
+              <label style="display: block; color: var(--sage); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">UPI ID</label>
+              <input type="text" id="upiId" placeholder="username@bank" style="width:100%; padding:12px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: #fff; border-radius: 8px; font-family: inherit; font-size: 14px; outline: none; transition: border-color 0.3s;">
+              <div id="upiError" style="color: #ff6b6b; font-size: 12px; margin-top: 5px; display: none;">Please enter a valid UPI ID (e.g. name@upi).</div>
+            </div>
+            
+            <!-- Coupon Code Section -->
+            <div style="margin-bottom: 25px;">
+              <label style="display: block; color: var(--sage); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">Coupon Code</label>
+              <div style="display: flex; gap: 10px;">
+                <input type="text" id="couponCode" placeholder="Enter coupon (e.g. EASE20)" style="flex: 1; padding:12px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: #fff; border-radius: 8px; font-family: inherit; font-size: 14px; outline: none; text-transform: uppercase; transition: border-color 0.3s;">
+                <button type="button" id="applyCouponBtn" style="background: transparent; color: var(--white); border: 1px solid var(--sage); padding: 0 20px; cursor: pointer; border-radius: 8px; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; transition: all 0.3s; height: 46px;">Apply</button>
+              </div>
+              <div id="couponMessage" style="font-size: 12px; margin-top: 5px; min-height: 15px;"></div>
+            </div>
+            
+            <!-- Total breakdown -->
+            <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; margin-bottom: 25px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; color: var(--sage);">
+                <span>Subtotal</span>
+                <span id="checkoutSubtotal">₹0.00</span>
+              </div>
+              <div id="autoDiscountRow" style="display: none; justify-content: space-between; margin-bottom: 8px; font-size: 14px; color: #4ade80;">
+                <span>Auto 10% OFF (>₹2000)</span>
+                <span id="checkoutAutoDiscount">-₹0.00</span>
+              </div>
+              <div id="checkoutDiscountRow" style="display: none; justify-content: space-between; margin-bottom: 8px; font-size: 14px; color: #4ade80;">
+                <span>Coupon Discount (<span id="couponPercent">0</span>%)</span>
+                <span id="checkoutDiscount">-₹0.00</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-family: var(--font-anton); font-size: 1.8rem; letter-spacing: 0.05em; color: var(--white); margin-top: 10px;">
+                <span>Payable Total</span>
+                <span id="checkoutFinalTotal">₹0.00</span>
+              </div>
+            </div>
+            
+            <button type="submit" class="nav-btn" style="width:100%; background:var(--white); color:var(--navy); font-weight:600; cursor:pointer; border:none; padding: 15px; text-align: center;">PLACE ORDER</button>
+          </form>
         </div>
       </div>
       
