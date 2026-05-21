@@ -134,7 +134,7 @@
     .scanner-box {
       position: relative;
       width: 100%;
-      height: 250px;
+      height: 360px;
       background: rgba(0,0,0,0.3);
       border-radius: 12px;
       overflow: hidden;
@@ -142,6 +142,10 @@
       justify-content: center;
       align-items: center;
       border: 1px dashed rgba(255,255,255,0.2);
+      cursor: pointer;
+    }
+    .scanner-box:hover .scanner-upload-hint {
+      opacity: 1;
     }
     .scanner-img {
       width: 100%;
@@ -331,15 +335,24 @@
           <p style="color: var(--taupe); font-size: 13px; margin-top: 5px;">Scan your facial characteristics to generate matching smart-lens and spectacle recommendations.</p>
         </div>
 
+        <input type="file" id="scannerPicInput" accept="image/*" style="display: none;">
         <div class="scanner-box" id="scannerBox">
-          <img src="logo.jpg" alt="Scanning Target" class="scanner-img" id="scannerImage">
+          <img src="" alt="Scanning Target" class="scanner-img" id="scannerImage" style="display:none;">
           <div class="scanner-line" id="scannerLine"></div>
           <div class="scanner-glow"></div>
           <div id="scannerPlaceholderText" style="position: absolute; text-align: center; z-index: 10; padding: 20px;">
-            <div style="font-size: 24px; margin-bottom: 8px;">📷</div>
-            <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sage); font-weight: 600;">Upload photo to enable scanner</div>
+            <div style="font-size: 32px; margin-bottom: 10px;">📷</div>
+            <div style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sage); font-weight: 600; margin-bottom: 6px;">Click to upload photo for scan</div>
+            <div style="font-size: 11px; color: var(--taupe);">Your face photo for AI analysis</div>
+          </div>
+          <div class="scanner-upload-hint" style="position:absolute; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity 0.3s; z-index:8; pointer-events:none;">
+            <span style="color:#fff; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.1em;">Change Photo</span>
           </div>
         </div>
+
+        <button type="button" class="nav-btn" id="uploadScanPhotoBtn" style="border: 1px solid var(--sage); color: var(--sage); background: transparent; font-weight: 600; width: 100%; padding: 12px; font-size: 12px; margin-top: -4px;">
+          📁 &nbsp;UPLOAD PHOTO FOR SCAN
+        </button>
 
         <button type="button" class="nav-btn" id="startScanBtn" style="border: 1px solid var(--sage); color: var(--white); background: transparent; font-weight: 600; width: 100%; padding: 14px; opacity: 0.5; cursor: not-allowed;" disabled>
           ANALYSE FACE FEATURES
@@ -443,16 +456,23 @@
         return;
       }
 
-      // Load Profile Picture from localstorage if available
+      // Load Profile Picture from localstorage if available (profile pic only — NOT scanner)
       const savedPic = localStorage.getItem('visionease_profile_pic');
       const avatarImg = document.getElementById('avatarImage');
       const scannerImg = document.getElementById('scannerImage');
       const scannerPlaceholderText = document.getElementById('scannerPlaceholderText');
       const startScanBtn = document.getElementById('startScanBtn');
 
+      // Restore profile picture (avatar only)
       if (savedPic) {
         avatarImg.src = savedPic;
-        scannerImg.src = savedPic;
+      }
+
+      // Restore scanner photo (separate from profile pic)
+      const savedScannerPic = localStorage.getItem('visionease_scanner_pic');
+      if (savedScannerPic) {
+        scannerImg.src = savedScannerPic;
+        scannerImg.style.display = 'block';
         scannerPlaceholderText.style.display = 'none';
         startScanBtn.disabled = false;
         startScanBtn.style.opacity = '1';
@@ -510,7 +530,7 @@
         alert('Settings saved successfully!');
       });
 
-      // Handle picture upload
+      // ── Profile Picture Upload (avatar only — does NOT touch scanner) ──
       const profilePicInput = document.getElementById('profilePicInput');
       const avatarWrapper = document.getElementById('avatarWrapper');
 
@@ -524,11 +544,35 @@
           const reader = new FileReader();
           reader.onload = function(event) {
             const dataUrl = event.target.result;
+            // Save and display ONLY in the avatar — scanner is unaffected
             localStorage.setItem('visionease_profile_pic', dataUrl);
             avatarImg.src = dataUrl;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      // ── Scanner Photo Upload (separate from profile pic) ──
+      const scannerPicInput = document.getElementById('scannerPicInput');
+      const scannerBox = document.getElementById('scannerBox');
+      const uploadScanPhotoBtn = document.getElementById('uploadScanPhotoBtn');
+
+      function openScannerUpload() { scannerPicInput.click(); }
+
+      scannerBox.addEventListener('click', openScannerUpload);
+      uploadScanPhotoBtn.addEventListener('click', openScannerUpload);
+
+      scannerPicInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(event) {
+            const dataUrl = event.target.result;
+            // Save and display ONLY in the scanner — profile pic is unaffected
+            localStorage.setItem('visionease_scanner_pic', dataUrl);
             scannerImg.src = dataUrl;
+            scannerImg.style.display = 'block';
             scannerPlaceholderText.style.display = 'none';
-            
             // Enable Scan button
             startScanBtn.disabled = false;
             startScanBtn.style.opacity = '1';
@@ -539,7 +583,6 @@
       });
 
       // Face scanning simulation
-      const scannerBox = document.getElementById('scannerBox');
       const scannerLine = document.getElementById('scannerLine');
       const analysisResults = document.getElementById('analysisResults');
       
