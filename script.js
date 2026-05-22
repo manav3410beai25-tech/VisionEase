@@ -511,7 +511,7 @@ document.addEventListener('DOMContentLoaded', () => {
    - fetch() + async/await for Gemini API
 ═══════════════════════════════════════════════════ */
 
-const GROQ_API_KEY = "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";
+const GROQ_API_KEY = "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";
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_MODEL = "llama-3.1-8b-instant";
 
